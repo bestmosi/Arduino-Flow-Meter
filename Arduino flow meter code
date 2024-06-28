@@ -1,0 +1,42 @@
+#include <Arduino.h>
+#include <U8g2lib.h>
+#include <Wire.h> 
+
+U8G2_SSD1306_128X64_NONAME_F_HW_I2C u8g2(U8G2_R0,  U8X8_PIN_NONE); 
+char buffer[32];
+
+const int numReadings = 10;   // adjust for smothing
+int readings[numReadings];    
+int readIndex = 0;            
+int total = 0;                
+int average = 0;              
+
+void setup(void) {
+  u8g2.begin(); 
+}
+
+void loop(void) {
+  int analogValue = analogRead(A0); // read the analog input
+
+  total = total - readings[readIndex];
+  readings[readIndex] = analogValue;
+  total = total + readings[readIndex];
+
+  readIndex = (readIndex + 1) % numReadings;
+
+  average = total / numReadings;
+
+  int progress = map(average, 0, 1023, 0, 500);// adjust for mapping
+
+  u8g2.clearBuffer();    
+  u8g2.setBitmapMode(1);
+  u8g2.setFont(u8g2_font_ncenB24_tr);
+  sprintf(buffer, " %d ", progress); 
+  u8g2.drawStr(28, 50, buffer); // display the string
+  u8g2.setFont(u8g2_font_haxrcorp4089_tr);
+  u8g2.drawStr(0, 7, "Flow Meter g/s");
+  u8g2.drawLine(0, 9, 127, 9);
+  u8g2.sendBuffer();          
+
+  delay(100); 
+}
